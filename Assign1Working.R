@@ -14,13 +14,16 @@ main()
    library('igraph')
    library('cccd')
    library('class')
-   #hamJaccRowMatrix()
-   #hamJaccColMatrix
-   #mstGraph()
+   #hammyDist()
+   #jaccDist()
+   hamJaccRowMatrix()
+   hamJaccColMatrix
+   mstGraph()
    RNGHamming()
-   #JaccardmstGraph()
-   #jaccardRNG()
-   #knnHammingRows()
+   JaccardmstGraph()
+   jaccardRNG()
+   knnHammingRows()
+   knnJacRows()
    
    
  }
@@ -30,7 +33,7 @@ main()
  
  # a)
  
- # Returns the matrices for question 1a
+ # Returns the Hamming distance and jaccard matrices for question 1a
  hamJaccRowMatrix <- function(){
    US = read.csv("USPresidency.csv")
    US$Target <- NULL
@@ -46,7 +49,7 @@ main()
    jaccMat <- emptyMat
    i <- 1
    j <- 1
-   # Loops Through calculating the hamming distances and Jaccard Similarities.
+   # Assigns hamming distance and jaccard distances to new matrices 
    while(i < nrow(emptyMat)+1){
      while(j < ncol(emptyMat)+1){
        hammyMat[i,j] <-  hammyDist(US[i,],US[j,])
@@ -81,7 +84,8 @@ main()
    jaccColMat <- colMat
    x <- 1
    y <- 1
-   # Loops Through calculating the hamming distances and Jaccard Similarities.
+   
+   # Assigns hamming distance and jaccard distances to new matrices 
    while(x < nrow(colMat)+1){
      while(y < ncol(colMat)+1){
        
@@ -95,7 +99,8 @@ main()
    }
    write.csv(hamColMat, "HammingColsDistanceMatrix1.csv")
    write.csv(jaccColMat, "JaccardColsDistanceMatrix1.csv")
-   # Jaccard and Hamming comparisons between columns of dataset Matrices stored in list  
+   
+   # Jaccard and Hamming Matrices stored in list  
    hamJaccColLis <- list(hamColMat,jaccColMat)
    hamJaccColLis
    
@@ -104,7 +109,8 @@ main()
  
  # c)
  
- # Returns the Mininum Spanning tree graph for the Hamming distance matrices from questions 1a and 1b 
+ # Returns the Mininum Spanning tree graph for the Hamming distance matrices 
+ # from questions 1a and 1b 
  mstGraph <- function ()
  {
    
@@ -116,15 +122,13 @@ main()
    hamRowsGraph <- graph_from_adjacency_matrix(hamRows,mode = 'undirected', weighted = TRUE)
    hamColsGraph <- graph_from_adjacency_matrix(hamCols,mode = 'undirected', weighted = TRUE)
    
-   #sets the names for the vertices
-   #Sets the labels which is what Yed uses
-   V(hamRowsGraph)$name <- colnames(hamRows)
-   V(hamColsGraph)$name <- colnames(hamCols)
+   #Sets the labels and edge weights which will be displayed in yEd 
    V(hamRowsGraph)$label <- colnames(hamRows)
    V(hamColsGraph)$label <- colnames(hamCols)
    E(hamRowsGraph)$label <- E(hamRowsGraph)$weight
    E(hamColsGraph)$label <- E(hamColsGraph)$weight
    
+   # writes graph to gml file to be displayed in yEd graph editor
    write_graph((mst(hamRowsGraph)),'hammingRowsMST.gml',format = "gml")
    write_graph(mst(hamColsGraph),'hammingColumnsMST.gml',format = "gml")
    plot(mst(hamRowsGraph))
@@ -135,36 +139,44 @@ mstGraph()
 
 # Exercise 2
  
- # Returns the Relative Neighborhood graphs for the Hamming distance matrices from questions 1a and 1b 
+ # Returns the Relative Neighborhood graphs for the Hamming distance matrices 
+ # from questions 1a and 1b 
  RNGHamming <- function()
  {
    q1a = hamJaccRowMatrix()
    q1b = hamJaccColMatrix()
    hamRows = q1a[[1]]
    hamCols = q1b[[1]] 
-   rngHamRows <- rng(x=hamRows, open = FALSE, r = 1, algorithm = 'cover_tree')
-   rngHamCols <- rng(x=hamCols, open = FALSE, r = 1, algorithm = 'cover_tree')
-   rowMat_EL <- as.matrix(rngHamRows, matrix.type =  "edgelist")
-   colMat_EL <- as.matrix(rngHamCols, matrix.type = "edgelist")
-   graph_rngRows <- graph_from_edgelist(rowMat_EL, directed = FALSE)
-   graph_rngCols <- graph_from_edgelist(colMat_EL, directed = FALSE)
-   V(graph_rngRows)$name <- colnames(hamRows)
-   V(graph_rngCols)$name <- colnames(hamCols)
-   V(graph_rngRows)$label <- colnames(hamRows)
-   V(graph_rngCols)$label <- colnames(hamCols)
-   write_graph(graph_rngRows, 'hammingRowsRNG.gml', format = "gml")
-   write_graph(graph_rngCols, 'hammingColsRNG.gml', format = "gml")
-   plot(graph_rngRows)
-   plot(graph_rngCols)
+   rngHamRows <- rng(dx=hamRows, open = FALSE, r = 1, algorithm = 'cover_tree')
+   rngHamCols <- rng(dx=hamCols, open = FALSE, r = 1, algorithm = 'cover_tree')
+   
+   # sets graphs to undirected
+   rngHamRows <- as.undirected(rngHamRows)
+   rngHamCols <- as.undirected(rngHamCols)
+   
+   #Sets the labels which will be displayed in yEd 
+   E(rngHamRows)$weight <- apply(get.edges(rngHamRows,1:ecount(rngHamRows)),1,function(x)hamRows[x[1],x[2]])
+   E(rngHamCols)$weight <- apply(get.edges(rngHamCols,1:ecount(rngHamCols)),1,function(x)hamCols[x[1],x[2]])
+   E(rngHamRows)$label <- E(rngHamRows)$weight
+   E(rngHamCols)$label <- E(rngHamCols)$weight
+   V(rngHamRows)$label <- colnames(hamRows)
+   V(rngHamCols)$label <- colnames(hamCols)
+   
+   # writes graph to gml file to be displayed in yEd graph editor
+   write_graph(rngHamRows, 'hammingRowsRNG.gml', format = "gml")
+   write_graph(rngHamCols, 'hammingColsRNG.gml', format = "gml")
+   plot(rngHamRows)
+   plot(rngHamCols)
  }
  
  RNGHamming()
-
+ ?rng
  
  
 # Exercise 3
  
- # Returns the Minimum Spanning tree graph for the Jaccard distance matrices from questions 1a and 1b  
+ # Returns the Minimum Spanning tree graph for the Jaccard distance matrices 
+ # from questions 1a and 1b  
  JaccardmstGraph <- function ()
  {
    
@@ -176,17 +188,16 @@ mstGraph()
    jacRowsGraph <- graph_from_adjacency_matrix(jacRows,mode = 'undirected', weighted = TRUE)
    jacColsGraph <- graph_from_adjacency_matrix(jacCols,mode = 'undirected', weighted = TRUE)
    
-   #sets the names for the vertices
-   #Sets the labels which is what Yed uses
-   V(jacRowsGraph)$name <- colnames(jacRows)
-   V(jacColsGraph)$name <- colnames(jacCols)
+   #Sets the vertice labels and edge weights which will be displayed in yEd 
    V(jacRowsGraph)$label <- colnames(jacRows)
    V(jacColsGraph)$label <- colnames(jacCols)
    E(jacRowsGraph)$label <- E(jacRowsGraph)$weight
    E(jacColsGraph)$label <- E(jacColsGraph)$weight
    
+   # writes graph to gml file to be displayed in yEd graph editor
    write_graph((mst(jacRowsGraph)),'jaccardRowsMST.gml',format = "gml")
    write_graph(mst(jacColsGraph),'jaccardColumnsMST.gml',format = "gml")
+   
    plot(mst(jacRowsGraph))
    plot(mst(jacColsGraph))
    
@@ -196,27 +207,34 @@ mstGraph()
  
 # Exercise 4
  
- # Returns the Relative Neighborhood Graph for the Jaccard distance matrices from questions 1a and 1b  
+ # Returns the Relative Neighborhood Graph for the Jaccard distance matrices
+ # from questions 1a and 1b  
  jaccardRNG <- function()
  {
    q1a = hamJaccRowMatrix()
    q1b = hamJaccColMatrix()
    jacRows = q1a[[2]]
    jacCols = q1b[[2]] 
-   rngJacRows <- rng(x=jacRows, r = 1, open = FALSE, algorithm = 'kd_tree')
-   rngJacCols <- rng(x=jacCols, r = 1, open = FALSE, algorithm = 'kd_tree')
-   rowMat_EL <- as.matrix(rngJacRows, matrix.type =  "edgelist")
-   colMat_EL <- as.matrix(rngJacCols, matrix.type = "edgelist")
-   rngJacRowsGraph <- graph_from_edgelist(rowMat_EL, directed = FALSE)
-   rngJacColsGraph <- graph_from_edgelist(colMat_EL, directed = FALSE)
-   V(rngJacRowsGraph)$name <- colnames(jacRows)
-   V(rngJacColsGraph)$name <- colnames(jacCols)
-   V(rngJacRowsGraph)$label <- colnames(jacRows)
-   V(rngJacColsGraph)$label <- colnames(jacCols)
-   write_graph(rngJacRowsGraph, 'jaccardRowsRNG.gml', format = "gml")
-   write_graph(rngJacColsGraph, 'jaccardColsRNG.gml', format = "gml")
-   plot(rngJacRowsGraph)
-   plot(rngJacColsGraph)
+   rngJacRows <- rng(dx=jacRows, r = 1, open = FALSE, algorithm = 'cover_tree')
+   rngJacCols <- rng(dx=jacCols, r = 1, open = FALSE, algorithm = 'cover_tree')
+   
+   # sets graphs to undirected
+   rngjacRows <- as.undirected(rngJacRows)
+   rngJacCols <- as.undirected(rngJacCols)
+   
+   #Sets the vertice labels which will be displayed on the graph in yEd 
+   E(rngJacRows)$weight <- apply(get.edges(rngJacRows,1:ecount(rngJacRows)),1,function(x)jacRows[x[1],x[2]])
+   E(rngJacCols)$weight <- apply(get.edges(rngJacCols,1:ecount(rngJacCols)),1,function(x)jacCols[x[1],x[2]])
+   E(rngJacRows)$label <- round(E(rngJacRows)$weight, 3)
+   E(rngJacCols)$label <- round(E(rngJacCols)$weight, 3)
+   V(rngJacRows)$label <- colnames(jacRows)
+   V(rngJacCols)$label <- colnames(jacCols)
+   
+   # writes graph to gml file to be displayed in yEd graph editor
+   write_graph(rngJacRows, 'jaccardRowsRNG.gml', format = "gml")
+   write_graph(rngJacCols, 'jaccardColsRNG.gml', format = "gml")
+   plot(rngJacRows)
+   plot(rngJacCols)
  }
  
  jaccardRNG()
@@ -230,33 +248,41 @@ mstGraph()
  knnHammingRows <- function(){
  q1a <- hamJaccRowMatrix() 
  hammyRows <- q1a[[1]] 
- knnGraph <- nng(x = hammyRows, k = 2, algorithm = 'cover_tree')
- rowMat_EL <- as.matrix(knnGraph, matrix.type =  "edgelist")
- knnHammyGraph <- graph_from_edgelist(rowMat_EL, directed = FALSE)
- E(knnHammyGraph)$weight <- apply(get.edges(knnGraph,1:ecount(knnGraph)),1,function(x)hammyRows[x[1],x[2]])
- E(knnHammyGraph)$label <- E(knnHammyGraph)$weight
- V(knnHammyGraph)$name <- colnames(hammyRows)
- V(knnHammyGraph)$label <- colnames(hammyRows)
- write_graph(knnHammyGraph, 'hammingRowsKnn.gml', format = "gml")
- plot(knnHammyGraph)
+ knnGraphHam <- nng(dx = hammyRows, k = 2, algorithm = 'cover_tree')
+ # sets graph to an undirected graph
+ knnGraphHam <- as.undirected(knnGraphHam)
+
+ # sets edge and vertice lables to be used in yEd graph editor
+ E(knnGraphHam)$weight <- apply(get.edges(knnGraphHam,1:ecount(knnGraphHam)),1,function(x)hammyRows[x[1],x[2]])
+ E(knnGraphHam)$label <- E(knnGraphHam)$weight
+ V(knnGraphHam)$label <- colnames(hammyRows)
+ 
+ # writes graph to gml file to be displayed in yEd graph editor
+ write_graph(knnGraphHam, 'hammingRowsKnn.gml', format = "gml")
+ plot(knnGraphHam)
  }
 
  knnHammingRows()
-
-
  
  
 # Exercise 6
- 
+ # Returns the knn graph with k=2 for the Jaccard distance matrix between all pairs 
+ # of elections of the US Presidency Dataset
  knnJacRows <- function(){
    q1a <- hamJaccRowMatrix() 
    jacRows <- q1a[[2]] 
-   knnGraph <- nng(x = jacRows, k = 2, algorithm = 'cover_tree')
-   rowMat_EL <- as.matrix(knnGraph, matrix.type =  "edgelist")
-   knnJacGraph <- graph_from_edgelist(rowMat_EL, directed = FALSE)
-   V(knnJacGraph)$name <- colnames(jacRows)
-   write_graph(knnJacGraph, 'jaccardRowsKnn', format = "gml")
-   plot(knnJacGraph)
+   knnGraphJac <- nng(dx = jacRows, k = 2, algorithm = 'cover_tree')
+   # set to undirected graph
+   knnGraphJac <- as.undirected(knnGraphJac)
+   
+   # writes graph to gml file to be displayed in yEd graph editor
+   E(knnGraphJac)$weight <- apply(get.edges(knnGraphJac,1:ecount(knnGraphJac)),1,function(x)jacRows[x[1],x[2]])
+   E(knnGraphJac)$label <- round(E(knnGraphJac)$weight, 3)
+   V(knnGraphJac)$label <- colnames(jacRows)
+   
+   # writes graph to gml file to be displayed in yEd graph editor
+   write_graph(knnGraphJac, 'jaccardRowsKnn.gml', format = "gml")
+   plot(knnGraphJac)
  }
  
  knnJacRows()
@@ -266,10 +292,12 @@ mstGraph()
  
 # Based on Results of ex5(knn) and ex1c(MST)
  
+ knnHammingRows()
+ mstGraph()
  
  
  
- 
+ ?round
  
  
  
