@@ -6,6 +6,21 @@
  # install.packages('XGR')
 
 
+# Returns the Jaccard similarities between any two binary strings
+jaccDist <- function(bin1,bin2){
+  #The sum of the pairs of attributes that are both equal to 1; Amount of times both years have 1/true for the same attribute.
+  inters = sum(bin1 + bin2 == 2)
+  #The number of times in which only one of the years value is 1 + the intersection.
+  join = sum(bin1 + bin2 == 1) + inters
+  1 - (inters/join)
+}
+
+# Returns hamming distance between any two binary data strings 
+hammyDist <- function(binA,binB){
+  
+  return(sum(binA != binB))
+}
+
 main()
  main <- function()
  {
@@ -14,8 +29,6 @@ main()
    library('igraph')
    library('cccd')
    library('class')
-   #hammyDist()
-   #jaccDist()
    hamJaccRowMatrix()
    hamJaccColMatrix
    mstGraph()
@@ -24,6 +37,8 @@ main()
    jaccardRNG()
    knnHammingRows()
    knnJacRows()
+   commonEdgeMstKnn()
+   commonEdgesJaccardRows()
    
    
  }
@@ -105,7 +120,7 @@ main()
    hamJaccColLis
    
  }
- hamJaccColMatrix()
+ 
  
  # c)
  
@@ -135,7 +150,7 @@ main()
    plot(mst(hamColsGraph))
    
  }
-mstGraph()
+
 
 # Exercise 2
  
@@ -169,8 +184,6 @@ mstGraph()
    plot(rngHamCols)
  }
  
- RNGHamming()
- ?rng
  
  
 # Exercise 3
@@ -202,7 +215,7 @@ mstGraph()
    plot(mst(jacColsGraph))
    
  }
- JaccardmstGraph()
+ 
  
  
 # Exercise 4
@@ -237,7 +250,7 @@ mstGraph()
    plot(rngJacCols)
  }
  
- jaccardRNG()
+ 
  
  
  
@@ -262,7 +275,7 @@ mstGraph()
  plot(knnGraphHam)
  }
 
- knnHammingRows()
+
  
  
 # Exercise 6
@@ -272,6 +285,7 @@ mstGraph()
    q1a <- hamJaccRowMatrix() 
    jacRows <- q1a[[2]] 
    knnGraphJac <- nng(dx = jacRows, k = 2, algorithm = 'cover_tree')
+   
    # set to undirected graph
    knnGraphJac <- as.undirected(knnGraphJac)
    
@@ -285,48 +299,86 @@ mstGraph()
    plot(knnGraphJac)
  }
  
- knnJacRows()
+ 
  
  
 # Exercise 7
  
-# Based on Results of ex5(knn) and ex1c(MST)
- 
- knnHammingRows()
- mstGraph()
- 
- 
- 
- ?round
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- # Returns the Jaccard similarities between any two binary strings
- jaccDist <- function(bin1,bin2){
-   #The sum of the pairs of attributes that are both equal to 1; Amount of times both years have 1/true for the same attribute.
-   inters = sum(bin1 + bin2 == 2)
-   #The number of times in which only one of the years value is 1 + the intersection.
-   join = sum(bin1 + bin2 == 1) + inters
-   1 - (inters/join)
- }
- 
- # Returns hamming distance between any two binary data strings 
- hammyDist <- function(binA,binB){
+# Returns graph with common edges from q1c(mst) and q5(knn)
+ commonEdgeMstKnn <- function()
+ {
+   q1a <- hamJaccRowMatrix() 
+   hammyRows <- q1a[[1]] 
+   #knn code
+   knnGraphHam <- nng(dx = hammyRows, k = 2, algorithm = 'cover_tree')
+   knnGraphHam <- as.undirected(knnGraphHam)
+   V(knnGraphHam)$name <- colnames(hammyRows)
+   V(knnGraphHam)$label <- colnames(hammyRows)
    
-   return(sum(binA != binB))
+   #mst code
+   hamRowsGraph <- graph_from_adjacency_matrix(hammyRows,mode = 'undirected', weighted = TRUE)
+   V(hamRowsGraph)$name <- colnames(hammyRows)
+   V(hamRowsGraph)$label <- colnames(hammyRows)
+   E(hamRowsGraph)$label <- E(hamRowsGraph)$weight
+   E(hamRowsGraph)$name <- E(hamRowsGraph)$weight
+   hamRowsGraphMST <- mst(hamRowsGraph)
+   
+   # stores common edges between graphs in new variable
+   commonEdges <- intersection(knnGraphHam, hamRowsGraphMST, byname = "auto" )
+   E(commonEdges)$weight <- apply(get.edges(commonEdges,1:ecount(commonEdges)),1,function(x)hammyRows[x[1],x[2]])
+   E(commonEdges)$label <- E(commonEdges)$weight
+   V(commonEdges)$name <- colnames(hammyRows)
+   V(commonEdges)$label <- colnames(hammyRows)
+   
+   write_graph(commonEdges, 'commonEdgeMstKnn_EX7.gml', format = "gml")
+   plot(commonEdges)
  }
+
+
+
+ 
+ 
+ # Exercise 8
+ commonEdgesJaccardRows <- function()
+   {
+   q1a <- hamJaccRowMatrix() 
+   jacRows <- q1a[[2]] 
+   
+   # knn graph retrieval
+   knnGraphJac <- nng(dx = jacRows, k = 2, algorithm = 'cover_tree')
+   # set to undirected graph
+   knnGraphJac <- as.undirected(knnGraphJac)
+   V(knnGraphJac)$label <- colnames(jacRows)
+   V(knnGraphJac)$name <- colnames(jacRows)
+   
+   # mst graph retrieval
+   jacRowsGraph <- graph_from_adjacency_matrix(jacRows,mode = 'undirected', weighted = TRUE)
+   #Sets the vertices labels and edge weights which will be displayed in yEd 
+   V(jacRowsGraph)$label <- colnames(jacRows)
+   V(jacRowsGraph)$name <- colnames(jacRows)
+   E(jacRowsGraph)$label <- round(E(jacRowsGraph)$weight, 3)
+   E(jacRowsGraph)$name <- round(E(jacRowsGraph)$weight, 3)
+   jacRowsGraphMst <- mst(jacRowsGraph)
+  
+   # stores common edges between two graphs in new variable
+   commonEdges <- intersection(knnGraphJac, jacRowsGraphMst, byname = "auto" )
+   E(commonEdges)$weight <- apply(get.edges(commonEdges,1:ecount(commonEdges)),1,function(x)jacRows[x[1],x[2]])
+   E(commonEdges)$label <- round(E(commonEdges)$weight, 3)
+   V(commonEdges)$name <- colnames(hammyRows)
+   V(commonEdges)$label <- colnames(hammyRows)
+   write_graph(commonEdges, 'commonEdgeMstKnn_EX8.gml', format = "gml")
+   plot(commonEdges)
+   
+   }
+  
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
  
  
  
