@@ -13,18 +13,19 @@ main <- function(){
   library('igraph')
   library('cccd')
   library('class')
-  #concrete <- read_excel("Concrete_Data.xls")
-  # Feature labels renamed for simplicity
-  #names(concrete) <- c("Cement","Blast Furnace Slag","Fly Ash", "Water", 
-  #                     "Superplasticizer", "Coarse Aggregate", "Fine Aggregate", 
-  #                     "Age", "Concrete Compressive Strength")
+  concrete <- read_excel("Concrete_Data.xls")
+   #Feature labels renamed for simplicity
+  names(concrete) <- c("Cement","Blast Furnace Slag","Fly Ash", "Water", 
+                      "Superplasticizer", "Coarse Aggregate", "Fine Aggregate", 
+                       "Age", "Concrete Compressive Strength")
+  concrete <- rowShufflerSubsetter(concrete)
   
-  #concreteFeatSampDistMats(concrete)
-  #RNGConcfeatSamps(concrete)
+  concreteFeatSampDistMats(concrete)
+  RNGConcfeatSamps(concrete)
   #borutaFeatSel()
   #rowShuffler()
   #irisRowMatrix()
-  commonEdgesMstKnn()
+  #commonEdgesMstKnn()
   
 }
 
@@ -35,7 +36,14 @@ main()
 # Exercise 1
 
 
-
+rowShufflerSubsetter <- function(dataFile){
+  
+  set.seed(42)
+  concSubset <- dataFile[sample(1:nrow(dataFile)),]
+  concSubset <- concSubset[1:200,]
+  
+  
+}
 
 
 
@@ -273,17 +281,7 @@ commonEdgesMstKnn <- function()
   write_graph(commonEdges, 'IrisCommonEdgeMstKnn.gml', format = "gml")
   plot(commonEdges)
 }
-library(igraph)
-install.packages("mstknnclust")
-library("mstknnclust")
-irisSamps <- irisRowMatrix()
-results <- mst.knn(irisSamps)
-results
-cg.network=igraph::graph.adjacency(irisSamps, mode="undirected", weighted=TRUE)
-plot(results$network, edge.label=round(E(cg.network)$weight, 2), vertex.size=8, 
-     vertex.color=igraph::clusters(results$network)$membership, 
-     layout=igraph::layout.fruchterman.reingold(results$network, niter=10000),
-     main=paste("MST-kNN \n Clustering solution \n Number of clusters=",results$cnumber,sep="" ))
+
 
 
 
@@ -322,10 +320,16 @@ library(cluster)
 
 
 kmeansIris <- function(){
+  library(stats)
+  library(dplyr)
+  library(ggplot2)
+  library(NbClust)
+  library(cluster)
   
   irisSamps <- irisRowMatrix()
-  wssPlot(irisSamps)
+ # wssPlot(irisSamps)
   irisKM <- kmeans(irisSamps, centers = 3, nstart = 25)
+  irisKM$cluster
   irisG <- graph_from_adjacency_matrix(irisSamps)
   plot(irisG)
   summary(irisKM)
@@ -341,11 +345,65 @@ kmeansIris()
 
 
 
+# Exercise 8
+
+# mst-knn method
+
+library(igraph)
+#install.packages("mstknnclust")
+library("mstknnclust")
+irisSamps <- irisRowMatrix()
+results <- mst.knn(irisSamps)
+results$cluster
+plot(results$cluster)
+plot(irisSamps, col=(results$cluster+1),
+     main="mst-knn Clustering Results", xlab="", ylab="", pch=20, cex=2)
+
+
+
+# kmeans method
+
+library(stats)
+library(dplyr)
+library(ggplot2)
+library(NbClust)
+library(cluster)
+
+irisSamps <- irisRowMatrix()
+dim(irisSamps)
+# wssPlot(irisSamps)
+irisKM <- kmeans(irisSamps, centers = 3, nstart = 25)
+irisKM$cluster
+#plotting of k-means results
+
+plot(irisSamps, col=(irisKM$cluster+1),
+     main="K-Means Clustering Results with K=3", xlab="", ylab="", pch=20, cex=2)
+
+
+
+library(stats)
+
+# Hierarchical clustering method
+
+irisSamps <- irisRowMatrix()
+irisSamps <- as.dist(irisSamps)
+iris.hierarch <- hclust(irisSamps, method = "complete")
+
+# plotting dendogram of hierarchical clustering results
+plot(iris.hierarch,main="CompleteLinkage",xlab="",sub="", cex=.9)
+
+cutree(iris.hierarch, 2)
 
 
 
 
 
+
+
+# Exercise 9:
+
+
+# Seperating US Presidency dataset into 
 
 
 
