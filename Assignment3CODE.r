@@ -370,14 +370,15 @@ library(NbClust)
 library(cluster)
 
 irisSamps <- irisRowMatrix()
+wssPlot(irisSamps)
 dim(irisSamps)
 # wssPlot(irisSamps)
-irisKM <- kmeans(irisSamps, centers = 3, nstart = 25)
+irisKM <- kmeans(irisSamps, centers = 2, nstart = 25)
 irisKM$cluster
 #plotting of k-means results
 
 plot(irisSamps, col=(irisKM$cluster+1),
-     main="K-Means Clustering Results with K=3", xlab="", ylab="", pch=20, cex=2)
+     main="K-Means Clustering Results with K=2", xlab="", ylab="", pch=20, cex=2)
 
 
 
@@ -403,11 +404,20 @@ cutree(iris.hierarch, 2)
 # Exercise 9:
 
 
-# Seperating US Presidency dataset into 
+# Separating US Presidency dataset into 2 groups
 
 
-
-
+splitter <- function(){
+  
+  us <- read.csv("USPresidency.csv",header = TRUE, sep = ",")
+  write.csv(us[1:18,],"US-Incumbent.csv")
+  write.csv(us[19:31,],"US-Challenger.csv")
+  
+  
+  
+  
+}
+splitter()
 
 
 
