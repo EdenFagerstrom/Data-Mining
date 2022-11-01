@@ -20,12 +20,19 @@ main <- function(){
                        "Age", "Concrete Compressive Strength")
   concrete <- rowShufflerSubsetter(concrete)
   
-  concreteFeatSampDistMats(concrete)
-  RNGConcfeatSamps(concrete)
+  #concreteFeatSampDistMats(concrete)
+  #RNGConcfeatSamps(concrete)
   #borutaFeatSel()
   #rowShuffler()
+  #stockEG
   #irisRowMatrix()
   #commonEdgesMstKnn()
+  #kmeansIris()
+  #mstKnnIris()
+  #kMeansEx8()
+  #hierarchIris()
+  #splitter()
+  #featEng()
   
 }
 
@@ -194,6 +201,28 @@ rowShuffler <- function(){
   
 }
 
+# Exercise 3
+
+stockEG <- function(){
+  stock1 <- c(1,0,0,1,0,1,0)
+  stock2 <- c(1,1,0,0,0,0,1)
+  stock3 <- c(1,0,0,0,1,1,0)
+  stock4 <- c(1,0,0,1,1,0,1)
+  stock5 <- c(1,0,0,1,1,0,1)
+  
+  purchased <- c("sold","sold","sold","sold","unsold","unsold","unsold")
+  
+  stocks <- data.frame(stock1,stock2,stock3,stock4,stock5, purchased)
+  
+  
+  kFeatStocks <- data.frame(stock1, stock3, stock4, purchased)
+  
+  kFeatStocks
+  
+}
+
+
+
 
 
 
@@ -337,7 +366,7 @@ kmeansIris <- function(){
   clusplot(pam(irisSamps, 3))
   
 }
-kmeansIris()
+
 
 
 
@@ -349,52 +378,60 @@ kmeansIris()
 
 # mst-knn method
 
-library(igraph)
-#install.packages("mstknnclust")
-library("mstknnclust")
-irisSamps <- irisRowMatrix()
-results <- mst.knn(irisSamps)
-results$cluster
-plot(results$cluster)
-plot(irisSamps, col=(results$cluster+1),
-     main="mst-knn Clustering Results", xlab="", ylab="", pch=20, cex=2)
+mstKnnIris <- fucntion(){
+  library(igraph)
+  #install.packages("mstknnclust")
+  library("mstknnclust")
+  irisSamps <- irisRowMatrix()
+  results <- mst.knn(irisSamps)
+  results$cluster[150]
+  plot(results$cluster)
+  plot(irisSamps, col=(results$cluster+1),
+       main="mst-knn Clustering Results", xlab="", ylab="", pch=20, cex=2)
+}
+
+
 
 
 
 # kmeans method
 
-library(stats)
-library(dplyr)
-library(ggplot2)
-library(NbClust)
-library(cluster)
+kMeansEx8 <- function(){
+  library(stats)
+  library(dplyr)
+  library(ggplot2)
+  library(NbClust)
+  library(cluster)
+  
+  irisSamps <- irisRowMatrix()
+  wssPlot(irisSamps)
+  dim(irisSamps)
+  # wssPlot(irisSamps)
+  irisKM <- kmeans(irisSamps, centers = 2, nstart = 25)
+  irisKM$cluster
+  #plotting of k-means results
+  
+  plot(irisSamps, col=(irisKM$cluster+1),
+       main="K-Means Clustering Results with K=2", xlab="", ylab="", pch=20, cex=2)
+}
 
-irisSamps <- irisRowMatrix()
-wssPlot(irisSamps)
-dim(irisSamps)
-# wssPlot(irisSamps)
-irisKM <- kmeans(irisSamps, centers = 2, nstart = 25)
-irisKM$cluster
-#plotting of k-means results
-
-plot(irisSamps, col=(irisKM$cluster+1),
-     main="K-Means Clustering Results with K=2", xlab="", ylab="", pch=20, cex=2)
-
-
-
-library(stats)
 
 # Hierarchical clustering method
-
-irisSamps <- irisRowMatrix()
-irisSamps <- as.dist(irisSamps)
-iris.hierarch <- hclust(irisSamps, method = "complete")
-
-# plotting dendogram of hierarchical clustering results
-plot(iris.hierarch,main="CompleteLinkage",xlab="",sub="", cex=.9)
-
-cutree(iris.hierarch, 2)
-
+  
+hierarchIris <- fucntion(){
+  library(stats)
+  
+  
+  irisSamps <- irisRowMatrix()
+  irisSamps <- as.dist(irisSamps)
+  iris.hierarch <- hclust(irisSamps, method = "complete")
+  
+  # plotting dendogram of hierarchical clustering results
+  plot(iris.hierarch,main="CompleteLinkage",xlab="",sub="", cex=.9)
+  
+  cutree(iris.hierarch, 2)
+  
+}
 
 
 
@@ -417,11 +454,21 @@ splitter <- function(){
   
   
 }
-splitter()
 
 
+# Exercise 10
 
-
+featEng <- function(){
+  
+  presSubset <- read.csv("USPresidency.csv",header = TRUE, sep = ",")
+  presSubset <- presSubset[, c("Q4", "Q7", "Q12", "Target")]
+  presSubset <- presSubset[-4,]
+  presSubset$functionVal <- 1 + 2*(presSubset$Q7) - 2*(presSubset$Q12) - 4*(presSubset$Q4)
+  View(presSubset)
+  
+  
+  
+}
 
 
 
